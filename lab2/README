@@ -1,0 +1,22 @@
+Unzip the source files.
+From root dir, run:
+     javac -encoding ISO-8859-1 -Xlint:none -cp .:/home/hannes/Documents/4KTH/Search_Engines/lab1/pdfbox ir/*.java
+
+Then run with:
+     java -Xmx1024m -cp .:/home/hannes/Documents/4KTH/Search_Engines/lab1/pdfbox ir.SearchGUI -d davisWiki
+
+To find single term queries, run:
+   grep -rEil "\bZombie\b" . > textfile
+   
+phrase queries:
+   grep -rEil "\bZombie is good food\b" . > textfile
+
+union queries:
+   grep -rEil "\bZombie\b"|"\bfood\b"|"\bBen\b" . > textfile
+
+Intersected queries:
+   run single term queries to two different text files, then:
+   grep -Fx -f textfile1 textfile2 > intersectedtextfile
+
+
+What's the deal with CalFresh.f?
