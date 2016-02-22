@@ -10,7 +10,7 @@
 
 package ir;
 
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -21,7 +21,7 @@ import java.util.ListIterator;
 public class HashedIndex implements Index {
 
     /** The index as a hashtable. */
-    private HashMap<String,PostingsList> index = new HashMap<String,PostingsList>();
+    private TreeMap<String,PostingsList> index = new TreeMap<String,PostingsList>();
 
 
     /**
@@ -85,13 +85,21 @@ public class HashedIndex implements Index {
     public PostingsList search( Query query, int queryType, int rankingType, int structureType ) {
 	LinkedList<String> terms = query.terms;
 	LinkedList<PostingsList> pList = new LinkedList();
-	PostingsList answer = new PostingsList(); //TODO ugly row?
+	PostingsList answer = new PostingsList();
 	if(query.terms.size() > 0){
 	    for(String s : terms){
 		System.out.println("Search terms is " + s);
 		pList.add(getPostings(s));
 	    }
 	    
+
+	    if(queryType == Index.RANKED_QUERY){
+		for(String s: index.keySet()){
+		    System.err.println(s);
+		}
+
+		return answer; //TODO implement stuff
+	    }
 	    // This should be the same for both intersection query and phrase, i.e. if only one word
 	    // TODO Might be subject to change for the ranked retrieval
 	    if(pList.size() == 1){
@@ -101,6 +109,7 @@ public class HashedIndex implements Index {
 	    
 	    int i = 2;
 	    int limit = pList.size(); // number of search terms
+	    
 	    answer = intersect(pList.get(0), pList.get(1), queryType);
 	    while(i < limit){
 		answer = intersect(answer, pList.get(i), queryType);
@@ -244,6 +253,8 @@ public class HashedIndex implements Index {
 	
 	return answer;
     }
+
+    
 
     /**
      *  No need for cleanup in a HashedIndex.
