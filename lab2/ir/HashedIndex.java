@@ -10,7 +10,7 @@
 
 package ir;
 
-import java.util.TreeMap;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -21,7 +21,7 @@ import java.util.ListIterator;
 public class HashedIndex implements Index {
 
     /** The index as a hashtable. */
-    private TreeMap<String,PostingsList> index = new TreeMap<String,PostingsList>();
+    private HashMap<String,PostingsList> index = new HashMap<String,PostingsList>();
 
 
     /**
@@ -94,14 +94,15 @@ public class HashedIndex implements Index {
 	    
 
 	    if(queryType == Index.RANKED_QUERY){
-		for(String s: index.keySet()){
-		    System.err.println(s);
-		}
-
+		System.err.println("Calculating scores ......");
+		calculateScores();
+		System.err.println("Done");
+		System.err.println("Score for first zombie doc is: " + getPostings("zombie").get(0).score);
 		return answer; //TODO implement stuff
 	    }
+
 	    // This should be the same for both intersection query and phrase, i.e. if only one word
-	    // TODO Might be subject to change for the ranked retrieval
+	    // but not for ranked retrieval
 	    if(pList.size() == 1){
 		return pList.get(0);
 	    }
@@ -253,8 +254,22 @@ public class HashedIndex implements Index {
 	
 	return answer;
     }
-
     
+
+    /**
+     * Calculates the scores for the different PostingsEntries
+     */ 
+    public void calculateScores(){
+	double n = docIDs.size();
+	for(PostingsList pl : index.values()){
+	    double df = pl.size();
+	    double idf = Math.log(n/df);
+	    for(PostingsEntry pe : (LinkedList<PostingsEntry>) pl.getList()){
+		pe.score = pe.offset.size()*idf;
+	    }
+	}
+    }    
+
 
     /**
      *  No need for cleanup in a HashedIndex.
