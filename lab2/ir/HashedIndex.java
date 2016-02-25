@@ -245,9 +245,6 @@ public class HashedIndex implements Index {
 	PostingsEntry pe = new PostingsEntry();
 	while(li.hasNext()){
 	    pe = li.next();
-	    for(Integer i : pe.offset){
-		System.err.println("DocID: " + pe.docID + "offset: " + i);
-	    }
 	}
 	
 	return answer;
