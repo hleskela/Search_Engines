@@ -94,10 +94,8 @@ public class HashedIndex implements Index {
 	    
 
 	    if(queryType == Index.RANKED_QUERY){
-		System.err.println("Calculating scores ......");
-		calculateScores();
-		System.err.println("Done");
 		System.err.println("Score for first zombie doc is: " + getPostings("zombie").get(0).score);
+		
 		return answer; //TODO implement stuff
 	    }
 
