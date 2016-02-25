@@ -31,6 +31,11 @@ public class PostingsList implements Serializable {
 	return list.get( i );
     }
 
+    /**  Returns the ith posting */
+    public LinkedList getList() {
+	return list;
+    }
+
 
     public boolean contains(PostingsEntry pe){
 	return list.contains(pe);
