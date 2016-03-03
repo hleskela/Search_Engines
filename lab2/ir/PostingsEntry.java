@@ -17,6 +17,17 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
     public double score;
     public LinkedList<Integer> offset = new LinkedList<Integer>(); // Limits number of tokens in text to 2^32-1 before overflow
 
+
+
+    // Constructor
+    public PostingsEntry(){
+    }
+
+    public PostingsEntry(int docID, double score){
+	this.docID = docID;
+	this.score = score;
+    }
+
     /**
      *  PostingsEntries are compared by their score (only relevant 
      *  in ranked retrieval).
