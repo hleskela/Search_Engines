@@ -10,10 +10,12 @@
 
 package ir;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Map;
 
 /**
  *   Implements an inverted index as a Hashtable from words to PostingsLists.
@@ -95,7 +97,7 @@ public class HashedIndex implements Index {
 
 	    if(queryType == Index.RANKED_QUERY){
 		System.err.println("Score for first zombie doc is: " + getPostings("zombie").get(0).score);
-		
+		answer = rankedSearch(terms);
 		return answer; //TODO implement stuff
 	    }
 
@@ -258,13 +260,79 @@ public class HashedIndex implements Index {
 	double n = docIDs.size();
 	for(PostingsList pl : index.values()){
 	    double df = pl.size();
-	    double idf = Math.log(n/df);
+	    double idf = Math.log(n/df); //TODO using natural log, should it be log10?
 	    for(PostingsEntry pe : (LinkedList<PostingsEntry>) pl.getList()){
 		pe.score = pe.offset.size()*idf;
 	    }
 	}
     }    
 
+    public double WTF(int tf){
+	if (0 == tf)
+	    return 0;
+	return (1+Math.log(tf));
+    }
+
+    /**
+     * The search using fastCosineScore, see link for details
+     * http://www.ics.uci.edu/~djp3/classes/2008_09_26_CS221/Lectures/Lecture26.pdf
+     **/
+    public PostingsList rankedSearch(LinkedList<String> terms){
+	double N = docIDs.size();
+	PostingsList answer = new PostingsList();
+	double queryTf = 1/terms.size(); //TODO only if the words are unique
+	LinkedList<PostingsList> postLists = new LinkedList<PostingsList>();
+	
+	clearHashMaps();
+	
+	for(String s : terms){
+	    //double score = docScores.get(s);
+	    
+	    PostingsList queryPostingsList = index.get(s); //TODO returns one list, no for loop needed down below
+	    double df = queryPostingsList.size();
+	    //	    double queryIdfScore = Math.log(N/(df+1));
+	    double queryScore = 1+Math.log(N/df+1); //TODO why +1?
+	    //	    for(PostingsList pl : postLists){
+		for(PostingsEntry pe : (LinkedList<PostingsEntry>) queryPostingsList.getList()){
+		    if(docScores.get(""+pe.docID) == null){
+			docScores.put(""+pe.docID, queryScore*pe.score);
+			docMagnitude.put(""+pe.docID, pe.score*pe.score); //TODO don't need to if this, since mag is only updated with score
+		    } else{
+			docScores.put(""+pe.docID, docScores.get(""+pe.docID) + (queryScore*pe.score));
+			docMagnitude.put(""+pe.docID, docMagnitude.get(""+pe.docID)+(pe.score*pe.score));
+		    }
+		}
+		//}
+	}
+	
+	// Final step, calculates the rank with scores and magnitude
+	// TODO decide if you want docRank or not.
+	for(Map.Entry<String,Double> entry : docScores.entrySet()){
+	    int docID = Integer.parseInt(entry.getKey());
+	    double mag = docMagnitude.get(entry.getKey());
+	    double rank = entry.getValue()/(mag*mag);
+	    //docRank.put(entry.getKey(), rank);
+	    PostingsEntry pe = new PostingsEntry(docID, rank);
+	    
+	    answer.add(pe);
+	} 
+	
+	answer.sort();
+	return answer;
+    }
+
+    private void clearHashMaps(){
+	docScores.clear();
+	docMagnitude.clear();
+	docRank.clear();
+
+    }
+
+    public void updateScore(PostingsList pl, double score){
+	for(PostingsEntry pe : (LinkedList<PostingsEntry>) pl.getList()){
+	    score += pe.score * 10;
+	}
+    }
 
     /**
      *  No need for cleanup in a HashedIndex.
