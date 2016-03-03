@@ -291,13 +291,24 @@ public class HashedIndex implements Index {
 	    PostingsList queryPostingsList = index.get(s); //TODO returns one list, no for loop needed down below
 	    double df = queryPostingsList.size();
 	    //	    double queryIdfScore = Math.log(N/(df+1));
-	    double queryScore = 1+Math.log(N/df+1); //TODO why +1?
+	    double queryScore = Math.log(N/df+1); //TODO why +1? and should it be 1+ log?
 	    //	    for(PostingsList pl : postLists){
 		for(PostingsEntry pe : (LinkedList<PostingsEntry>) queryPostingsList.getList()){
 		    if(docScores.get(""+pe.docID) == null){
+			if(docIDs.get(""+pe.docID).equals("davisWiki/Zombie_Walk.f")){
+			    System.err.println("Found Zombie_Walk.f. Tracking progress....");
+			    System.err.println("Zombie_Walk.f tf-idf score: " + pe.score);
+			    System.err.println("The querys tf-idf score: " + queryScore);
+			    System.err.println("The magnitude of Zombie_Walk.f is: " + pe.score*pe.score);
+			    System.err.println("The rank should be: " + (pe.score*queryScore)/pe.score);
+			}
+			//System.err.println(docIDs.get(""+pe.docID));
 			docScores.put(""+pe.docID, queryScore*pe.score);
 			docMagnitude.put(""+pe.docID, pe.score*pe.score); //TODO don't need to if this, since mag is only updated with score
 		    } else{
+			if(docIDs.get(""+pe.docID).equals("Zombie_Walk.f")){
+			    System.err.println("you shouldn be here!");
+			}
 			docScores.put(""+pe.docID, docScores.get(""+pe.docID) + (queryScore*pe.score));
 			docMagnitude.put(""+pe.docID, docMagnitude.get(""+pe.docID)+(pe.score*pe.score));
 		    }
@@ -310,7 +321,12 @@ public class HashedIndex implements Index {
 	for(Map.Entry<String,Double> entry : docScores.entrySet()){
 	    int docID = Integer.parseInt(entry.getKey());
 	    double mag = docMagnitude.get(entry.getKey());
-	    double rank = entry.getValue()/(mag*mag);
+	    double rank = entry.getValue()/Math.sqrt(mag);
+	    if(docIDs.get(""+docID).equals("davisWiki/Zombie_Walk.f")){
+		System.err.println("The querys score, round 2: " + entry.getValue());
+		System.err.println("The querys mag, round 2: " + mag);
+		System.err.println("Actual rank that is set: "+rank);
+	    }
 	    //docRank.put(entry.getKey(), rank);
 	    PostingsEntry pe = new PostingsEntry(docID, rank);
 	    
@@ -326,12 +342,6 @@ public class HashedIndex implements Index {
 	docMagnitude.clear();
 	docRank.clear();
 
-    }
-
-    public void updateScore(PostingsList pl, double score){
-	for(PostingsEntry pe : (LinkedList<PostingsEntry>) pl.getList()){
-	    score += pe.score * 10;
-	}
     }
 
     /**
