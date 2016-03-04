@@ -15,6 +15,8 @@ public class PageRank{
      *   don't have more docs than we can keep in main memory.
      */
     final static int MAX_NUMBER_OF_DOCS = 2000000;
+    private int NUMBER_OF_DOCS = 0; //TODO remove
+    private double Jc = 0; //TODO remove this too
 
     /**
      *   Mapping from document names to document numbers.
@@ -158,9 +160,117 @@ public class PageRank{
      *   Computes the pagerank of each document.
      */
     void computePagerank( int numberOfDocs ) {
-	//
-	//   YOUR CODE HERE
-	//
+	this.NUMBER_OF_DOCS = numberOfDocs;
+	double jumpProbability = 1.0/(double) numberOfDocs;
+	double[] x = new double[numberOfDocs];
+	double[] xPrime = new double[numberOfDocs];
+
+	double[] G = new double[numberOfDocs];
+	G = calculateG(G);
+
+	xPrime[0] = 1; //Initial starting point
+	x[0] = 0;
+	for(int j = 1 ; j < numberOfDocs; j++){
+	    xPrime[j] = 0;
+	    x[j] = 0;
+	}
+	
+	System.err.println(jumpProbability);
+	double[] deltaX = calculateDifferenceVector(x, xPrime);
+
+	double length = calculateLength(deltaX);
+	
+	int i= 0;
+	int size = 0;
+	int sizeValue = 0;
+	while(Math.abs(length) > EPSILON && MAX_NUMBER_OF_ITERATIONS > i){
+	    //System.err.println("Length: "+length);
+	    //double tmp = BORED*jumpProbability;
+	    /*	    System.err.println("tmp(BORED*jumpProbability): "+tmp);
+	    if(link.get(i) == null){
+		i++;
+		continue;
+		}
+	    System.err.println("link.get(i).size(): "+link.get(i).size());
+	    if(link.get(i).size() > size){
+		size = link.get(i).size();
+		sizeValue = i;
+		}*/
+	    //System.err.println("link.get(5).get("+i%20+") is: "+link.get(5).get(i%20));
+	    i++;
+	    System.err.println("Iteration nr: "+i);
+	    x = xPrime;
+	    xPrime = calculateXPrime(xPrime, G);
+	    deltaX = calculateDifferenceVector(x, xPrime);
+	    length = calculateLength(deltaX);
+	}
+	/*	System.err.println("Max size: "+ size + "\t hashmap value: " + sizeValue);
+	System.err.println(docName[sizeValue]);*/
+	for(int h = 0; h<numberOfDocs; h++){
+	    System.err.println(xPrime[h]+ " "+ docName[h]);
+	}
+	System.err.println("Total number of iterations required: "+i);
+    }
+
+    private double[] calculateG(double[]G){
+	System.err.println("Calculating G");
+	int limit = this.NUMBER_OF_DOCS;
+	System.err.println("Limit: "+limit);
+	this.Jc = BORED*(1.0/(double) limit);
+	for(int i = 0; i < limit; i++){
+	    //G[i][1] = Jc; // Will be the same no matter what
+	    if( link.get(i) == null){
+		G[i] = this.Jc;
+		continue;
+	    }
+	    double P = 1.0/(double) link.get(i).size();
+	    G[i] = (1.0-BORED)*P+this.Jc;
+	}
+	System.err.println("Done calculating G");
+	return G;
+    }
+
+    private double[] calculateXPrime(double[] xPrime, double[]G){
+	System.err.println("Calculating new xPrime");
+	int limit = xPrime.length;
+	double jumpProbability = 1.0/(double) limit;
+	double []newXPrime = new double[limit];
+	for(int i = 0; i< limit; i++){
+	    if(link.get(i) == null){
+		newXPrime[i] += jumpProbability*BORED; //If it is a sink, then jump. Should it be jumpProbability? TODO fix
+		continue;
+	    }
+	    for(int j = 0; j< limit; j++){
+		if(link.get(i).get(j) == null){
+		    newXPrime[i] += xPrime[j]*this.Jc;
+		} else{
+		    newXPrime[i] += xPrime[j]*G[i];
+		}
+	    }
+	}
+	System.err.println("Done calculating new xPrime");
+	return newXPrime;
+    }
+
+    private double[] calculateDifferenceVector(double[] x, double[] xPrime ){
+	int numberOfDocs = x.length;
+	double[] deltaX = new double[numberOfDocs];
+	for(int k = 0; k < numberOfDocs; k++){
+	    deltaX[k] = x[k]-xPrime[k]; // Calculated according to lecture slides
+	}
+
+	return deltaX;
+    }
+
+    private double calculateLength(double[] deltaX){
+	double length = 0.0;
+	int numberOfDocs = deltaX.length;
+	for(int k = 0; k < numberOfDocs; k++){
+	    double d = deltaX[k];
+	    length += d*d;
+	}
+	length = Math.sqrt(length);
+	return length;
     }
 
 
@@ -176,3 +286,4 @@ public class PageRank{
 	}
     }
 }
+ 
