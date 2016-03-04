@@ -288,7 +288,7 @@ public class HashedIndex implements Index {
 	for(String s : terms){
 	    PostingsList queryPostingsList = index.get(s); //TODO returns one list, no for loop needed down below
 	    double df = queryPostingsList.size();
-	    double queryScore = Math.log(N/df+1); //TODO why +1? and should it be 1+ log?
+	    double queryScore = Math.log(N/(df+1)); //TODO why +1? and should it be 1+ log?
 		for(PostingsEntry pe : (LinkedList<PostingsEntry>) queryPostingsList.getList()){
 		    if(docScores.get(""+pe.docID) == null){
 			docScores.put(""+pe.docID, queryScore*pe.score);
