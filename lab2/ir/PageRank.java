@@ -206,10 +206,14 @@ public class PageRank{
 	}
 	/*	System.err.println("Max size: "+ size + "\t hashmap value: " + sizeValue);
 	System.err.println(docName[sizeValue]);*/
+	double finalSum = 0.0;
 	for(int h = 0; h<numberOfDocs; h++){
 	    System.err.println(xPrime[h]+ " "+ docName[h]);
+	    finalSum+=xPrime[h];
 	}
 	System.err.println("Total number of iterations required: "+i);
+	System.err.println("Epsilon vs diff: Math.abs(length) "+Math.abs(length) +"Epsilon " + EPSILON);
+	System.err.println("FinalSum: "+finalSum);
     }
 
     private double[] calculateG(double[]G){
@@ -237,7 +241,7 @@ public class PageRank{
 	double []newXPrime = new double[limit];
 	for(int i = 0; i< limit; i++){
 	    if(link.get(i) == null){
-		newXPrime[i] += jumpProbability*BORED; //If it is a sink, then jump. Should it be jumpProbability? TODO fix
+		newXPrime[i] = jumpProbability; //If it is a sink, then jump. Should it be jumpProbability? TODO fix
 		continue;
 	    }
 	    for(int j = 0; j< limit; j++){
