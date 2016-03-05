@@ -181,8 +181,8 @@ public class PageRank{
 	double length = calculateLength(deltaX);
 	
 	int i= 0;
-	int size = 0;
-	int sizeValue = 0;
+	//	int size = 0;
+	//	int sizeValue = 0;
 	while(Math.abs(length) > EPSILON && MAX_NUMBER_OF_ITERATIONS > i){
 	    //System.err.println("Length: "+length);
 	    //double tmp = BORED*jumpProbability;
@@ -198,60 +198,73 @@ public class PageRank{
 		}*/
 	    //System.err.println("link.get(5).get("+i%20+") is: "+link.get(5).get(i%20));
 	    i++;
-	    System.err.println("Iteration nr: "+i);
+	    printXPrimeDebug(xPrime, i, length);
 	    x = xPrime;
-	    xPrime = calculateXPrime(xPrime, G);
+	    xPrime = calculateNewXPrime(xPrime, G);
 	    deltaX = calculateDifferenceVector(x, xPrime);
 	    length = calculateLength(deltaX);
 	}
 	/*	System.err.println("Max size: "+ size + "\t hashmap value: " + sizeValue);
 	System.err.println(docName[sizeValue]);*/
-	double finalSum = 0.0;
-	for(int h = 0; h<numberOfDocs; h++){
-	    System.err.println(xPrime[h]+ " "+ docName[h]);
-	    finalSum+=xPrime[h];
-	}
-	System.err.println("Total number of iterations required: "+i);
-	System.err.println("Epsilon vs diff: Math.abs(length) "+Math.abs(length) +"Epsilon " + EPSILON);
-	System.err.println("FinalSum: "+finalSum);
+	printXPrimeDebug(xPrime, i, length);
+	
     }
-
+    /**
+     * Calculates G = cP + (1-c)J, where P is the transition matrix,
+     * J is the Jump matrix, and c =0.85 (BORED = 0.15)
+     * If a document doesn't have any outlinks, then it can jump to 
+     * any other document, meaning P is 1/(NUMBER_OF_DOCS-1)
+     *
+     **/
     private double[] calculateG(double[]G){
 	System.err.println("Calculating G");
-	int limit = this.NUMBER_OF_DOCS;
-	System.err.println("Limit: "+limit);
-	this.Jc = BORED*(1.0/(double) limit);
-	for(int i = 0; i < limit; i++){
-	    //G[i][1] = Jc; // Will be the same no matter what
-	    if( link.get(i) == null){
-		G[i] = this.Jc;
-		continue;
+	this.Jc = (BORED/(double) NUMBER_OF_DOCS);
+	for(int i = 0; i < this.NUMBER_OF_DOCS; i++){
+	    double cP;
+	    if( 0 == out[i]){
+		cP = (1.0-BORED)/(double) (NUMBER_OF_DOCS-1);
+	    } else{
+		cP = (1.0-BORED)/(double) out[i];
 	    }
-	    double P = 1.0/(double) link.get(i).size();
-	    G[i] = (1.0-BORED)*P+this.Jc;
+	    G[i] = cP+this.Jc;
 	}
 	System.err.println("Done calculating G");
 	return G;
     }
 
-    private double[] calculateXPrime(double[] xPrime, double[]G){
+    private void printXPrimeDebug(double[] xPrime, int i, double length){	
+	double finalSum = 0.0;
+	for(int h = 0; h<NUMBER_OF_DOCS; h++){
+	    System.err.println(xPrime[h]+ " "+ docName[h]);
+	    finalSum+=xPrime[h];
+	}
+	System.err.println("Number of iterations: "+i);
+	System.err.println("Epsilon vs diff: Math.abs(length) "+Math.abs(length) +"Epsilon " + EPSILON);
+	System.err.println("FinalSum: "+finalSum);
+	System.err.println("link.get(0): "+ link.get(0) +" is "+docName[1]);
+    }
+
+    private double[] calculateNewXPrime(double[] xPrime, double[]G){
 	System.err.println("Calculating new xPrime");
 	int limit = xPrime.length;
 	double jumpProbability = 1.0/(double) limit;
 	double []newXPrime = new double[limit];
 	for(int i = 0; i< limit; i++){
-	    if(link.get(i) == null){
-		newXPrime[i] = jumpProbability; //If it is a sink, then jump. Should it be jumpProbability? TODO fix
-		continue;
-	    }
-	    for(int j = 0; j< limit; j++){
-		if(link.get(i).get(j) == null){
-		    newXPrime[i] += xPrime[j]*this.Jc;
-		} else{
-		    newXPrime[i] += xPrime[j]*G[i];
+	    if(link.get(i) != null){
+		for(int j = 0; j< limit; j++){
+		    if(link.get(i).get(j) == null){
+			newXPrime[i] += xPrime[j]*this.Jc;
+		    } else{
+			newXPrime[i] += xPrime[j]*G[j];
+		    }
 		}
-	    }
+		
+	    }else{
+		for(int j=1; j<=limit;j++)
+		    newXPrime[i] += xPrime[j-1]*this.Jc;
+	    } 
 	}
+	
 	System.err.println("Done calculating new xPrime");
 	return newXPrime;
     }
