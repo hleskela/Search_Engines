@@ -57,6 +57,7 @@ public class Indexer {
      */
     public Indexer() {
 	index = new HashedIndex();
+	index.readRankScore();
     }
 
 

@@ -17,6 +17,9 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Map;
 import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  *   Implements an inverted index as a Hashtable from words to PostingsLists.
@@ -268,11 +271,6 @@ public class HashedIndex implements Index {
 	}
     }    
 
-    public double WTF(int tf){
-	if (0 == tf)
-	    return 0;
-	return (1+Math.log(tf));
-    }
 
     /**
      * The search using fastCosineScore, see link for details
@@ -334,24 +332,24 @@ public class HashedIndex implements Index {
      * This function is used to get the rank from the text file of docNames and rank.
      * We store this in a HashMap to combine it later with the tf-idf score.
      **/
-    private void readDocNames() {
+    public void readRankScore() {
+	System.err.println("Start reading the pagerank19.out....");
         String filename = "pagerank19.out";
         try {
-            System.err.println( "Reading file articleTitles.txt... " );
             BufferedReader in = new BufferedReader( new FileReader( filename ));
             String line;
             while ((line = in.readLine()) != null){
                 int index = line.indexOf( ";" );
                 String docName = line.substring( 0, index );
-                String docRank = line.substring(index+1, line.length()).concat(".f"); //TODO is this slow?
+                double docRank = Double.parseDouble(line.substring(index+1, line.length())); //TODO is this slow?
                 docPageRanks.put(docName, docRank);
             }
-        } catch ( FileNotFoundExfffception e ) {
+        } catch ( FileNotFoundException e ) {
 	    System.err.println( "File " + filename + " not found!" );
 	} catch ( IOException e ) {
             System.err.println( "Error reading file " + filename );
         }
-        System.err.println( "Done reading the articleTitles.txt file!" );
+        System.err.println( "Done reading the pagerank19.out file!" );
     }
 
 

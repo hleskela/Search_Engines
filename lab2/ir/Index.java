@@ -37,7 +37,7 @@ public interface Index {
     public HashMap<String, Double> docScores = new HashMap<String, Double>();
     public HashMap<String, Double> docMagnitude = new HashMap<String, Double>();
     public HashMap<String, Double> docRank = new HashMap<String, Double>();
-    public HashMap<String, Double> docPageRank = new HashMap<String, Double>();
+    public HashMap<String, Double> docPageRanks = new HashMap<String, Double>();
 
     public void insert( String token, int docID, int offset );
     public Iterator<String> getDictionary();
@@ -45,6 +45,7 @@ public interface Index {
     public PostingsList search( Query query, int queryType, int rankingType, int structureType );
     public void calculateScores();
     public void cleanup();
-
+    public void readRankScore();
+    
 }
 		    
