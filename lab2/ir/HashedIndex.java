@@ -104,6 +104,15 @@ public class HashedIndex implements Index {
 		    answer = rankedSearch(terms);
 		} else if(rankingType == Index.COMBINATION){
 		    answer = rankedSearch(terms);
+		    double x = 1.0;
+		    double y = 100000.0; //makes the most important docs in the order of 10<x<100
+		    for(PostingsEntry pe : (LinkedList<PostingsEntry>)answer.getList()){
+			String docName = docIDs.get(""+pe.docID);
+			docName = docName.substring(10,docName.length()); //TODO gets rid of davisWiki/
+			double pagerank = docPageRanks.get(docName);
+			pe.score = pe.score*x + pagerank*y;
+		    }
+		    answer.sort();
 		} else if(rankingType == Index.PAGERANK){
 		    answer = getPageRankPostingsList();
 		}
@@ -309,6 +318,10 @@ public class HashedIndex implements Index {
 	
 	for(String s : terms){
 	    PostingsList queryPostingsList = index.get(s); //TODO returns one list, no for loop needed down below
+	    if(queryPostingsList == null){
+		continue;
+		//return answer; //TODO fix this so that it works for some words that don't exist, but some w
+	    }
 	    double df = queryPostingsList.size();
 	    double queryScore = Math.log(N/(df+1)); //TODO why +1? and should it be 1+ log?
 		for(PostingsEntry pe : (LinkedList<PostingsEntry>) queryPostingsList.getList()){
@@ -330,10 +343,10 @@ public class HashedIndex implements Index {
 	    double rank = entry.getValue()/Math.sqrt(mag);
 
 	    //Debug info
-	    System.err.println(docIDs.get(""+docID));
+	    /*System.err.println(docIDs.get(""+docID));
 	    System.err.println("The querys score, round 2: " + entry.getValue());
 	    System.err.println("The querys mag, round 2: " + mag);
-	    System.err.println("Actual rank that is set: "+rank);
+	    System.err.println("Actual rank that is set: "+rank);*/
 	    
 
 	    PostingsEntry pe = new PostingsEntry(docID, rank);	    
@@ -347,8 +360,6 @@ public class HashedIndex implements Index {
     private void clearHashMaps(){
 	docScores.clear();
 	docMagnitude.clear();
-	docRank.clear();
-
     }
 
     /**
