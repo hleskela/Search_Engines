@@ -24,6 +24,11 @@ public class PageRank{
     HashMap<String,String> actualDocNames = new HashMap<String,String>();
 
     /**
+     * A list of scores for the final sorting and printout
+     **/
+    LinkedList<Score> scores = new LinkedList<Score>();
+
+    /**
      *   Mapping from document names to document numbers.
      */
     Hashtable<String,Integer> docNumber = new Hashtable<String,Integer>();
@@ -66,13 +71,13 @@ public class PageRank{
      *   Convergence criterion: Transition probabilities do not 
      *   change more that EPSILON from one iteration to another.
      */
-    final static double EPSILON  = 0.0001; //original was 0.0001, converged after 7.  0.000001 converged after 34
+    final static double EPSILON  = 0.00001; //original was 0.0001, converged after 7.  0.000001 converged after 34
 
     /**
      *   Never do more than this number of iterations regardless
      *   of whether the transistion probabilities converge or not.
      */
-    final static int MAX_NUMBER_OF_ITERATIONS = 1000;
+    final static int MAX_NUMBER_OF_ITERATIONS = 19;//1000;
 
     
     /* --------------------------------------------- */
@@ -172,9 +177,7 @@ public class PageRank{
 		int index = line.indexOf( ";" );
 		String docID = line.substring( 0, index );
 		String docName = line.substring(index+1, line.length());
-		System.err.println("docID: "+docID+" , docName: " + docName);
 		actualDocNames.put(docID,docName);
-		System.err.println(actualDocNames.get(docID));
 	    }
 	} catch ( FileNotFoundException e ) {
 	    System.err.println( "File " + filename + " not found!" );
@@ -205,12 +208,10 @@ public class PageRank{
 	    x[j] = 0;
 	}
 	
-	System.err.println(jumpProbability);
 	double[] deltaX = calculateDifferenceVector(x, xPrime);
-
 	double length = calculateLength(deltaX);
-	
 	int i= 0;
+
 	while(Math.abs(length) > EPSILON && MAX_NUMBER_OF_ITERATIONS > i){
 	    i++;
 	    printXPrimeDebug(xPrime, i, length);
@@ -219,14 +220,34 @@ public class PageRank{
 	    deltaX = calculateDifferenceVector(x, xPrime);
 	    length = calculateLength(deltaX);
 	}
-	printXPrimeDebug(xPrime, i, length);
+	createPrintableInfo(xPrime);
+	//printXPrimeDebug(xPrime, i, length);
 	
     }
+
+    /**
+     *
+     **/
+    private void createPrintableInfo(double[] xPrime){
+	Score s;
+	for(int h = 0; h<NUMBER_OF_DOCS; h++){
+	    String docname = docName[h];
+	    s = new Score(xPrime[h], docname, actualDocNames.get(docname));
+	    scores.add(s);
+	}
+	Collections.sort(scores);
+	for(int i=0; i<51;i++){
+	    Score tmp = scores.get(i);
+	    System.err.println(tmp.docID + " : " + tmp.docName + " : " + tmp.score);
+	}
+    }
+
     /**
      * Calculates G = cP + (1-c)J, where P is the transition matrix,
      * J is the Jump matrix, and c =0.85 (BORED = 0.15)
      * If a document doesn't have any outlinks, then it can jump to 
      * any other document, meaning P is 1/(NUMBER_OF_DOCS-1)
+
      *
      **/
     private double[] calculateG(double[]G){
@@ -257,7 +278,6 @@ public class PageRank{
 	for(int h = 0; h<NUMBER_OF_DOCS; h++){
 	    finalSum+=xPrime[h];
 	}
-	printXPrime(xPrime);
 	System.err.println("Number of iterations: "+i);
 	System.err.println("Epsilon vs diff: Math.abs(length) "+Math.abs(length) +"Epsilon " + EPSILON);
 	System.err.println("FinalSum: "+finalSum);
@@ -319,6 +339,28 @@ public class PageRank{
 	else {
 	    new PageRank( args[0] );
 	}
+    }
+
+
+    /**
+     * A class to keep track of the three parameters of a document.
+     * What a mess, huh!?!
+     **/
+    private class Score implements Comparable<Score>, Serializable{
+	public double score;
+	public String docID;
+	public String docName;
+
+	public Score(double score, String docID, String docName){
+	    this.score = score;
+	    this.docID = docID;
+	    this.docName = docName;
+	}
+
+	public int compareTo( Score other ) {
+	    return Double.compare( other.score, score );
+	}
+
     }
 }
  
