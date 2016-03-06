@@ -34,9 +34,9 @@ public class HashedIndex implements Index {
      *  Inserts this token in the index.
      */
     public void insert( String token, int docID, int offset ) {
-	if(token.equals("zombie")){
+	/*	if(token.equals("zombie")){
 	    System.out.println("Zombie warning when building index, offset: " + offset);
-	}
+	    }*/
 
 	if(index.containsKey(token) == false){	    
 	    PostingsList pl = new PostingsList();
@@ -100,8 +100,13 @@ public class HashedIndex implements Index {
 	    
 
 	    if(queryType == Index.RANKED_QUERY){
-		System.err.println("Score for first zombie doc is: " + getPostings("zombie").get(0).score);
-		answer = rankedSearch(terms);
+		if(rankingType == Index.TF_IDF){
+		    answer = rankedSearch(terms);
+		} else if(rankingType == Index.COMBINATION){
+		    answer = rankedSearch(terms);
+		} else if(rankingType == Index.PAGERANK){
+		    answer = getPageRankPostingsList();
+		}
 		return answer; //TODO implement stuff
 	    }
 
@@ -125,6 +130,24 @@ public class HashedIndex implements Index {
 	    
 	}
 	return null;
+    }
+
+    /**
+     *
+     **/
+    public PostingsList getPageRankPostingsList(){
+	PostingsList answer = new PostingsList();
+	for(Map.Entry<String,String> entry : docIDs.entrySet()){
+            int docID = Integer.parseInt(entry.getKey());
+            String docName = entry.getValue();
+	    docName = docName.substring(10,docName.length());//10 removes the davisWiki/
+	    System.err.println(docName);
+	    double rank = docPageRanks.get(docName);
+            PostingsEntry pe = new PostingsEntry(docID, rank);
+            answer.add(pe);
+        }
+	answer.sort();
+	return answer;
     }
 
     /**
@@ -350,6 +373,7 @@ public class HashedIndex implements Index {
             System.err.println( "Error reading file " + filename );
         }
         System.err.println( "Done reading the pagerank19.out file!" );
+	System.err.println( "Size of docPageRanks is: " + docPageRanks.size() );
     }
 
 
