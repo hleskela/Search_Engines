@@ -19,6 +19,11 @@ public class PageRank{
     private double Jc = 0; //TODO remove this too
 
     /**
+     * Mapping from document integer name in linkDavis.txt to actual document name (- the .f)
+     **/
+    HashMap<String,String> actualDocNames = new HashMap<String,String>();
+
+    /**
      *   Mapping from document names to document numbers.
      */
     Hashtable<String,Integer> docNumber = new Hashtable<String,Integer>();
@@ -75,6 +80,7 @@ public class PageRank{
 
     public PageRank( String filename ) {
 	int noOfDocs = readDocs( filename );
+	readDocNames();
 	computePagerank( noOfDocs );
     }
 
@@ -155,6 +161,30 @@ public class PageRank{
 
     /* --------------------------------------------- */
 
+    private void readDocNames() {
+	String filename = "articleTitles.txt";
+	int fileIndex = 0;
+	try {
+	    System.err.print( "Reading file... " );
+	    BufferedReader in = new BufferedReader( new FileReader( filename ));
+	    String line;
+	    while ((line = in.readLine()) != null && fileIndex<MAX_NUMBER_OF_DOCS ){
+		int index = line.indexOf( ";" );
+		String docID = line.substring( 0, index );
+		String docName = line.substring(index+1, line.length());
+		System.err.println("docID: "+docID+" , docName: " + docName);
+		actualDocNames.put(docID,docName);
+		System.err.println(actualDocNames.get(docID));
+	    }
+	} catch ( FileNotFoundException e ) {
+	    System.err.println( "File " + filename + " not found!" );
+	} catch ( IOException e ) {
+	    System.err.println( "Error reading file " + filename );
+	}
+    }
+    
+    
+
 
     /*
      *   Computes the pagerank of each document.
@@ -181,8 +211,6 @@ public class PageRank{
 	double length = calculateLength(deltaX);
 	
 	int i= 0;
-	//	int size = 0;
-	//	int sizeValue = 0;
 	while(Math.abs(length) > EPSILON && MAX_NUMBER_OF_ITERATIONS > i){
 	    i++;
 	    printXPrimeDebug(xPrime, i, length);
@@ -217,70 +245,23 @@ public class PageRank{
 	return G;
     }
 
+    private void printXPrime(double[] xPrime){
+	for(int h = 0; h<NUMBER_OF_DOCS; h++){
+	    String docname = docName[h];
+	    System.err.println(xPrime[h]+ " "+ docname +" has docName "+ actualDocNames.get(docname));
+	}
+    }
+
     private void printXPrimeDebug(double[] xPrime, int i, double length){	
 	double finalSum = 0.0;
 	for(int h = 0; h<NUMBER_OF_DOCS; h++){
-	    //System.err.println(xPrime[h]+ " "+ docName[h]);
 	    finalSum+=xPrime[h];
 	}
+	printXPrime(xPrime);
 	System.err.println("Number of iterations: "+i);
 	System.err.println("Epsilon vs diff: Math.abs(length) "+Math.abs(length) +"Epsilon " + EPSILON);
 	System.err.println("FinalSum: "+finalSum);
     }
-
-    /*
-    private double[] calculateNewXPrime(double[] xPrime, double[]G){
-	System.err.println("Calculating new xPrime");
-	int limit = xPrime.length;
-	double jumpProbability = 1.0/(double) limit;
-	double []newXPrime = new double[limit];
-	for(int i = 0; i< limit; i++){
-	    if(link.get(i) != null){
-		for(int j = 0; j< limit; j++){
-		    if(link.get(i).get(j+1) == null){
-			newXPrime[i] += xPrime[j]*this.Jc;
-		    } else{
-			newXPrime[i] += xPrime[j]*G[j];
-		    }
-		}
-		
-	    }else{
-		for(int j=1; j<=limit;j++)
-		    newXPrime[i] += xPrime[j-1]*this.Jc;
-	    } 
-	}
-	
-	System.err.println("Done calculating new xPrime");
-	return newXPrime;
-    }
-    */
-    private double[] calculateNewXPrime2(double[] xPrime, double []G){
-	Hashtable<Integer,Boolean> row;
-        double sink = (1-BORED)/(NUMBER_OF_DOCS-1) + BORED/NUMBER_OF_DOCS;
-        double no_link = BORED/NUMBER_OF_DOCS;
-	double[] new_pi = new double[NUMBER_OF_DOCS];
-	//	new_pi = new double[NUMBER_OF_DOCS];
-	for (int i=0;i<NUMBER_OF_DOCS;i++) {
-	    row = link.get(i);
-	    if (row == null) {
-		for (int j=0;j<NUMBER_OF_DOCS;j++) {
-		    new_pi[j] += sink*xPrime[i];
-		}
-		new_pi[i] -= (1-BORED)/(NUMBER_OF_DOCS-1)*xPrime[i];
-	    } else {
-		for (int j=0;j<NUMBER_OF_DOCS;j++) {
-		    if (row.keySet().contains(j)) {
-			new_pi[j] += G[i] * xPrime[i];  
-		    } else {
-			new_pi[j] += no_link * xPrime[i];
-		    }
-		}
-		// no need to take care of the self jump since we already take cate of states with no links to i.e. no_link
-	    }
-	}
-	return new_pi;
-    }
-
 
     private double[] calculateNewXPrime(double [] xPrime, double[] G){
 	double[] newXPrime = new double[NUMBER_OF_DOCS];
