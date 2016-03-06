@@ -36,7 +36,6 @@ public interface Index {
     public HashMap<String, Integer> docLengths = new HashMap<String,Integer>();
     public HashMap<String, Double> docScores = new HashMap<String, Double>();
     public HashMap<String, Double> docMagnitude = new HashMap<String, Double>();
-    public HashMap<String, Double> docRank = new HashMap<String, Double>();
     public HashMap<String, Double> docPageRanks = new HashMap<String, Double>();
 
     public void insert( String token, int docID, int offset );
