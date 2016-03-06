@@ -39,10 +39,6 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
 	return Double.compare( other.score, score );
     }
 
-    //
-    //  YOUR CODE HERE
-    //
-
 }
 
     
