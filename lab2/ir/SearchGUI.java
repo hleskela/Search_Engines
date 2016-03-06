@@ -347,6 +347,7 @@ public class SearchGUI extends JFrame {
 	    for ( int i=0; i<dirNames.size(); i++ ) {
 		File dokDir = new File( dirNames.get( i ));
 		indexer.processFiles( dokDir );
+		indexer.calculateScores();
 	    }
 	    resultWindow.setText( "\n  Done!" );
 	}

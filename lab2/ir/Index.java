@@ -33,12 +33,16 @@ public interface Index {
     public static final int SUBPHRASE = 2; 
 	
     public HashMap<String, String> docIDs = new HashMap<String,String>();
-    public HashMap<String,Integer> docLengths = new HashMap<String,Integer>();
+    public HashMap<String, Integer> docLengths = new HashMap<String,Integer>();
+    public HashMap<String, Double> docScores = new HashMap<String, Double>();
+    public HashMap<String, Double> docMagnitude = new HashMap<String, Double>();
+    public HashMap<String, Double> docRank = new HashMap<String, Double>();
 
     public void insert( String token, int docID, int offset );
     public Iterator<String> getDictionary();
     public PostingsList getPostings( String token );
     public PostingsList search( Query query, int queryType, int rankingType, int structureType );
+    public void calculateScores();
     public void cleanup();
 
 }

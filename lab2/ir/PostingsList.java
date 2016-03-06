@@ -8,6 +8,7 @@
 
 package ir;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.io.Serializable;
@@ -29,6 +30,11 @@ public class PostingsList implements Serializable {
     /**  Returns the ith posting */
     public PostingsEntry get( int i ) {
 	return list.get( i );
+    }
+
+    /**  Returns the ith posting */
+    public LinkedList getList() {
+	return list;
     }
 
 
@@ -56,6 +62,10 @@ public class PostingsList implements Serializable {
      **/
     public void add(PostingsEntry e){
 	list.add(e); //TODO is anything else needed?
+    }
+
+    public void sort(){
+	Collections.sort(list);
     }
 }
 	

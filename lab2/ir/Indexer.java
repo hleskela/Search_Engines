@@ -35,7 +35,6 @@ public class Indexer {
     /** The next docID to be generated. */
     private int lastDocID = 0;
 
-
     /* ----------------------------------------------- */
 
 
@@ -150,6 +149,10 @@ public class Indexer {
      */
     public void insertIntoIndex( int docID, String token, int offset ) {
 	index.insert( token, docID, offset );
+    }
+
+    public void calculateScores(){
+	index.calculateScores();
     }
 }
 	

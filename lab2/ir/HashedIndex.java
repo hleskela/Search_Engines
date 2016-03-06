@@ -10,10 +10,12 @@
 
 package ir;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Map;
 
 /**
  *   Implements an inverted index as a Hashtable from words to PostingsLists.
@@ -85,15 +87,22 @@ public class HashedIndex implements Index {
     public PostingsList search( Query query, int queryType, int rankingType, int structureType ) {
 	LinkedList<String> terms = query.terms;
 	LinkedList<PostingsList> pList = new LinkedList();
-	PostingsList answer = new PostingsList(); //TODO ugly row?
+	PostingsList answer = new PostingsList();
 	if(query.terms.size() > 0){
 	    for(String s : terms){
 		System.out.println("Search terms is " + s);
 		pList.add(getPostings(s));
 	    }
 	    
+
+	    if(queryType == Index.RANKED_QUERY){
+		System.err.println("Score for first zombie doc is: " + getPostings("zombie").get(0).score);
+		answer = rankedSearch(terms);
+		return answer; //TODO implement stuff
+	    }
+
 	    // This should be the same for both intersection query and phrase, i.e. if only one word
-	    // TODO Might be subject to change for the ranked retrieval
+	    // but not for ranked retrieval
 	    if(pList.size() == 1){
 		return pList.get(0);
 	    }
@@ -101,6 +110,7 @@ public class HashedIndex implements Index {
 	    
 	    int i = 2;
 	    int limit = pList.size(); // number of search terms
+	    
 	    answer = intersect(pList.get(0), pList.get(1), queryType);
 	    while(i < limit){
 		answer = intersect(answer, pList.get(i), queryType);
@@ -237,12 +247,86 @@ public class HashedIndex implements Index {
 	PostingsEntry pe = new PostingsEntry();
 	while(li.hasNext()){
 	    pe = li.next();
-	    for(Integer i : pe.offset){
-		System.err.println("DocID: " + pe.docID + "offset: " + i);
-	    }
 	}
 	
 	return answer;
+    }
+    
+
+    /**
+     * Calculates the scores for the different PostingsEntries
+     */ 
+    public void calculateScores(){
+	double n = docIDs.size();
+	for(PostingsList pl : index.values()){
+	    double df = pl.size();
+	    double idf = Math.log(n/df); //TODO using natural log, should it be log10?
+	    for(PostingsEntry pe : (LinkedList<PostingsEntry>) pl.getList()){
+		pe.score = pe.offset.size()*idf;
+	    }
+	}
+    }    
+
+    public double WTF(int tf){
+	if (0 == tf)
+	    return 0;
+	return (1+Math.log(tf));
+    }
+
+    /**
+     * The search using fastCosineScore, see link for details
+     * http://www.ics.uci.edu/~djp3/classes/2008_09_26_CS221/Lectures/Lecture26.pdf
+     **/
+    public PostingsList rankedSearch(LinkedList<String> terms){
+	double N = docIDs.size();
+	PostingsList answer = new PostingsList();
+	double queryTf = 1/terms.size(); //TODO only if the words are unique
+	LinkedList<PostingsList> postLists = new LinkedList<PostingsList>();
+	
+	clearHashMaps();
+	
+	for(String s : terms){
+	    PostingsList queryPostingsList = index.get(s); //TODO returns one list, no for loop needed down below
+	    double df = queryPostingsList.size();
+	    double queryScore = Math.log(N/(df+1)); //TODO why +1? and should it be 1+ log?
+		for(PostingsEntry pe : (LinkedList<PostingsEntry>) queryPostingsList.getList()){
+		    if(docScores.get(""+pe.docID) == null){
+			docScores.put(""+pe.docID, queryScore*pe.score);
+			docMagnitude.put(""+pe.docID, pe.score*pe.score); //TODO don't need to if this, since mag is only updated with score
+		    } else{
+			docScores.put(""+pe.docID, docScores.get(""+pe.docID) + (queryScore*pe.score));
+			docMagnitude.put(""+pe.docID, docMagnitude.get(""+pe.docID)+(pe.score*pe.score));
+		    }
+		}
+	}
+	
+	// Final step, calculates the rank with scores and magnitude
+	// TODO decide if you want docRank or not.
+	for(Map.Entry<String,Double> entry : docScores.entrySet()){
+	    int docID = Integer.parseInt(entry.getKey());
+	    double mag = docMagnitude.get(entry.getKey());
+	    double rank = entry.getValue()/Math.sqrt(mag);
+
+	    //Debug info
+	    System.err.println(docIDs.get(""+docID));
+	    System.err.println("The querys score, round 2: " + entry.getValue());
+	    System.err.println("The querys mag, round 2: " + mag);
+	    System.err.println("Actual rank that is set: "+rank);
+	    
+
+	    PostingsEntry pe = new PostingsEntry(docID, rank);	    
+	    answer.add(pe);
+	} 
+	
+	answer.sort();
+	return answer;
+    }
+
+    private void clearHashMaps(){
+	docScores.clear();
+	docMagnitude.clear();
+	docRank.clear();
+
     }
 
     /**
