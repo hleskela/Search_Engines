@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Map;
+import java.io.BufferedReader;
 
 /**
  *   Implements an inverted index as a Hashtable from words to PostingsLists.
@@ -328,6 +329,31 @@ public class HashedIndex implements Index {
 	docRank.clear();
 
     }
+
+    /**
+     * This function is used to get the rank from the text file of docNames and rank.
+     * We store this in a HashMap to combine it later with the tf-idf score.
+     **/
+    private void readDocNames() {
+        String filename = "pagerank19.out";
+        try {
+            System.err.println( "Reading file articleTitles.txt... " );
+            BufferedReader in = new BufferedReader( new FileReader( filename ));
+            String line;
+            while ((line = in.readLine()) != null){
+                int index = line.indexOf( ";" );
+                String docName = line.substring( 0, index );
+                String docRank = line.substring(index+1, line.length()).concat(".f"); //TODO is this slow?
+                docPageRanks.put(docName, docRank);
+            }
+        } catch ( FileNotFoundExfffception e ) {
+	    System.err.println( "File " + filename + " not found!" );
+	} catch ( IOException e ) {
+            System.err.println( "Error reading file " + filename );
+        }
+        System.err.println( "Done reading the articleTitles.txt file!" );
+    }
+
 
     /**
      *  No need for cleanup in a HashedIndex.
