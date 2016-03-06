@@ -61,7 +61,7 @@ public class PageRank{
      *   Convergence criterion: Transition probabilities do not 
      *   change more that EPSILON from one iteration to another.
      */
-    final static double EPSILON = 0.0001;
+    final static double EPSILON  = 0.000001; //original was 0.0001, converged after 7
 
     /**
      *   Never do more than this number of iterations regardless
@@ -114,7 +114,7 @@ public class PageRank{
 		    String otherTitle = tok.nextToken();
 		    Integer otherDoc = docNumber.get( otherTitle );
 		    if ( otherDoc == null ) {
-			// This is a previousy unseen doc, so add it to the table.
+			// This is a previously unseen doc, so add it to the table.
 			otherDoc = fileIndex++;
 			docNumber.put( otherTitle, otherDoc );
 			docName[otherDoc] = otherTitle;
@@ -198,9 +198,9 @@ public class PageRank{
 		}*/
 	    //System.err.println("link.get(5).get("+i%20+") is: "+link.get(5).get(i%20));
 	    i++;
-	    printXPrimeDebug(xPrime, i, length);
+	    //printXPrimeDebug(xPrime, i, length);
 	    x = xPrime;
-	    xPrime = calculateNewXPrime(xPrime, G);
+	    xPrime = calculateNewXPrime2(xPrime, G);
 	    deltaX = calculateDifferenceVector(x, xPrime);
 	    length = calculateLength(deltaX);
 	}
@@ -242,6 +242,7 @@ public class PageRank{
 	System.err.println("Epsilon vs diff: Math.abs(length) "+Math.abs(length) +"Epsilon " + EPSILON);
 	System.err.println("FinalSum: "+finalSum);
 	System.err.println("link.get(0): "+ link.get(0) +" is "+docName[1]);
+	System.err.println("docname[13] is "+docName[13]);
     }
 
     private double[] calculateNewXPrime(double[] xPrime, double[]G){
@@ -252,7 +253,7 @@ public class PageRank{
 	for(int i = 0; i< limit; i++){
 	    if(link.get(i) != null){
 		for(int j = 0; j< limit; j++){
-		    if(link.get(i).get(j) == null){
+		    if(link.get(i).get(j+1) == null){
 			newXPrime[i] += xPrime[j]*this.Jc;
 		    } else{
 			newXPrime[i] += xPrime[j]*G[j];
@@ -267,6 +268,33 @@ public class PageRank{
 	
 	System.err.println("Done calculating new xPrime");
 	return newXPrime;
+    }
+
+    private double[] calculateNewXPrime2(double[] xPrime, double []G){
+	Hashtable<Integer,Boolean> row;
+        double sink = (1-BORED)/(NUMBER_OF_DOCS-1) + BORED/NUMBER_OF_DOCS;
+        double no_link = BORED/NUMBER_OF_DOCS;
+	double[] new_pi = new double[NUMBER_OF_DOCS];
+	//	new_pi = new double[NUMBER_OF_DOCS];
+	for (int i=0;i<NUMBER_OF_DOCS;i++) {
+	    row = link.get(i);
+	    if (row == null) {
+		for (int j=0;j<NUMBER_OF_DOCS;j++) {
+		    new_pi[j] += sink*xPrime[i];
+		}
+		new_pi[i] -= (1-BORED)/(NUMBER_OF_DOCS-1)*xPrime[i];
+	    } else {
+		for (int j=0;j<NUMBER_OF_DOCS;j++) {
+		    if (row.keySet().contains(j)) {
+			new_pi[j] += G[i] * xPrime[i];  
+		    } else {
+			new_pi[j] += no_link * xPrime[i];
+		    }
+		}
+		// no need to take care of the self jump since we already take cate of states with no links to i.e. no_link
+	    }
+	}
+	return new_pi;
     }
 
     private double[] calculateDifferenceVector(double[] x, double[] xPrime ){
