@@ -170,13 +170,13 @@ public class PageRank{
 	String filename = "articleTitles.txt";
 	int fileIndex = 0;
 	try {
-	    System.err.print( "Reading file... " );
+	    System.err.println( "Reading file articleTitles.txt... " );
 	    BufferedReader in = new BufferedReader( new FileReader( filename ));
 	    String line;
 	    while ((line = in.readLine()) != null && fileIndex<MAX_NUMBER_OF_DOCS ){
 		int index = line.indexOf( ";" );
 		String docID = line.substring( 0, index );
-		String docName = line.substring(index+1, line.length());
+		String docName = line.substring(index+1, line.length()).concat(".f"); //TODO is this slow?
 		actualDocNames.put(docID,docName);
 	    }
 	} catch ( FileNotFoundException e ) {
@@ -184,6 +184,7 @@ public class PageRank{
 	} catch ( IOException e ) {
 	    System.err.println( "Error reading file " + filename );
 	}
+	System.err.println( "Done reading the articleTitles.txt file!" );
     }
     
     
@@ -236,9 +237,10 @@ public class PageRank{
 	    scores.add(s);
 	}
 	Collections.sort(scores);
-	for(int i=0; i<51;i++){
+	for(int i=0; i<NUMBER_OF_DOCS;i++){
 	    Score tmp = scores.get(i);
-	    System.err.println(tmp.docID + " : " + tmp.docName + " : " + tmp.score);
+	    //System.err.println(tmp.docID + " : " + tmp.docName + " : " + tmp.score);
+	    System.err.println(tmp.docName + ";" + tmp.score);
 	}
     }
 
