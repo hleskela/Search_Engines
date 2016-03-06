@@ -61,7 +61,7 @@ public class PageRank{
      *   Convergence criterion: Transition probabilities do not 
      *   change more that EPSILON from one iteration to another.
      */
-    final static double EPSILON  = 0.000001; //original was 0.0001, converged after 7
+    final static double EPSILON  = 0.0001; //original was 0.0001, converged after 7.  0.000001 converged after 34
 
     /**
      *   Never do more than this number of iterations regardless
@@ -184,28 +184,13 @@ public class PageRank{
 	//	int size = 0;
 	//	int sizeValue = 0;
 	while(Math.abs(length) > EPSILON && MAX_NUMBER_OF_ITERATIONS > i){
-	    //System.err.println("Length: "+length);
-	    //double tmp = BORED*jumpProbability;
-	    /*	    System.err.println("tmp(BORED*jumpProbability): "+tmp);
-	    if(link.get(i) == null){
-		i++;
-		continue;
-		}
-	    System.err.println("link.get(i).size(): "+link.get(i).size());
-	    if(link.get(i).size() > size){
-		size = link.get(i).size();
-		sizeValue = i;
-		}*/
-	    //System.err.println("link.get(5).get("+i%20+") is: "+link.get(5).get(i%20));
 	    i++;
-	    //printXPrimeDebug(xPrime, i, length);
+	    printXPrimeDebug(xPrime, i, length);
 	    x = xPrime;
-	    xPrime = calculateNewXPrime2(xPrime, G);
+	    xPrime = calculateNewXPrime(xPrime, G);
 	    deltaX = calculateDifferenceVector(x, xPrime);
 	    length = calculateLength(deltaX);
 	}
-	/*	System.err.println("Max size: "+ size + "\t hashmap value: " + sizeValue);
-	System.err.println(docName[sizeValue]);*/
 	printXPrimeDebug(xPrime, i, length);
 	
     }
@@ -235,16 +220,15 @@ public class PageRank{
     private void printXPrimeDebug(double[] xPrime, int i, double length){	
 	double finalSum = 0.0;
 	for(int h = 0; h<NUMBER_OF_DOCS; h++){
-	    System.err.println(xPrime[h]+ " "+ docName[h]);
+	    //System.err.println(xPrime[h]+ " "+ docName[h]);
 	    finalSum+=xPrime[h];
 	}
 	System.err.println("Number of iterations: "+i);
 	System.err.println("Epsilon vs diff: Math.abs(length) "+Math.abs(length) +"Epsilon " + EPSILON);
 	System.err.println("FinalSum: "+finalSum);
-	System.err.println("link.get(0): "+ link.get(0) +" is "+docName[1]);
-	System.err.println("docname[13] is "+docName[13]);
     }
 
+    /*
     private double[] calculateNewXPrime(double[] xPrime, double[]G){
 	System.err.println("Calculating new xPrime");
 	int limit = xPrime.length;
@@ -269,7 +253,7 @@ public class PageRank{
 	System.err.println("Done calculating new xPrime");
 	return newXPrime;
     }
-
+    */
     private double[] calculateNewXPrime2(double[] xPrime, double []G){
 	Hashtable<Integer,Boolean> row;
         double sink = (1-BORED)/(NUMBER_OF_DOCS-1) + BORED/NUMBER_OF_DOCS;
@@ -296,6 +280,31 @@ public class PageRank{
 	}
 	return new_pi;
     }
+
+
+    private double[] calculateNewXPrime(double [] xPrime, double[] G){
+	double[] newXPrime = new double[NUMBER_OF_DOCS];
+	Hashtable<Integer,Boolean> rowInG = new Hashtable<Integer,Boolean>();
+	for(int i = 0; i < NUMBER_OF_DOCS ; i++){
+	    rowInG = link.get(i);
+	    if(rowInG == null){
+		for(int j = 0; j < NUMBER_OF_DOCS; j++){
+		    newXPrime[j] += xPrime[i] * G[i];
+		}
+		newXPrime[i] -= (1.0-BORED)/(NUMBER_OF_DOCS-1)*xPrime[i];
+	    } else{
+		for(int j=0; j< NUMBER_OF_DOCS; j++){
+		    if(rowInG.keySet().contains(j)){
+			newXPrime[j] += xPrime[i]*G[i];
+		    } else {
+			newXPrime[j] += xPrime[i]*Jc;
+		    }
+		}
+	    }
+	}
+	return newXPrime;
+    }
+
 
     private double[] calculateDifferenceVector(double[] x, double[] xPrime ){
 	int numberOfDocs = x.length;
