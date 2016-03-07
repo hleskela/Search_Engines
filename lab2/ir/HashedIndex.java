@@ -16,6 +16,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Map;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  *   Implements an inverted index as a Hashtable from words to PostingsLists.
@@ -30,9 +34,9 @@ public class HashedIndex implements Index {
      *  Inserts this token in the index.
      */
     public void insert( String token, int docID, int offset ) {
-	if(token.equals("zombie")){
+	/*	if(token.equals("zombie")){
 	    System.out.println("Zombie warning when building index, offset: " + offset);
-	}
+	    }*/
 
 	if(index.containsKey(token) == false){	    
 	    PostingsList pl = new PostingsList();
@@ -96,8 +100,22 @@ public class HashedIndex implements Index {
 	    
 
 	    if(queryType == Index.RANKED_QUERY){
-		System.err.println("Score for first zombie doc is: " + getPostings("zombie").get(0).score);
-		answer = rankedSearch(terms);
+		if(rankingType == Index.TF_IDF){
+		    answer = rankedSearch(terms);
+		} else if(rankingType == Index.COMBINATION){
+		    answer = rankedSearch(terms);
+		    double x = 1.0;
+		    double y = 100000.0; //makes the most important docs in the order of 10<x<100
+		    for(PostingsEntry pe : (LinkedList<PostingsEntry>)answer.getList()){
+			String docName = docIDs.get(""+pe.docID);
+			docName = docName.substring(10,docName.length()); //TODO gets rid of davisWiki/
+			double pagerank = docPageRanks.get(docName);
+			pe.score = pe.score*x + pagerank*y;
+		    }
+		    answer.sort();
+		} else if(rankingType == Index.PAGERANK){
+		    answer = getPageRankPostingsList();
+		}
 		return answer; //TODO implement stuff
 	    }
 
@@ -121,6 +139,24 @@ public class HashedIndex implements Index {
 	    
 	}
 	return null;
+    }
+
+    /**
+     *
+     **/
+    public PostingsList getPageRankPostingsList(){
+	PostingsList answer = new PostingsList();
+	for(Map.Entry<String,String> entry : docIDs.entrySet()){
+            int docID = Integer.parseInt(entry.getKey());
+            String docName = entry.getValue();
+	    docName = docName.substring(10,docName.length());//10 removes the davisWiki/
+	    System.err.println(docName);
+	    double rank = docPageRanks.get(docName);
+            PostingsEntry pe = new PostingsEntry(docID, rank);
+            answer.add(pe);
+        }
+	answer.sort();
+	return answer;
     }
 
     /**
@@ -267,11 +303,6 @@ public class HashedIndex implements Index {
 	}
     }    
 
-    public double WTF(int tf){
-	if (0 == tf)
-	    return 0;
-	return (1+Math.log(tf));
-    }
 
     /**
      * The search using fastCosineScore, see link for details
@@ -287,6 +318,10 @@ public class HashedIndex implements Index {
 	
 	for(String s : terms){
 	    PostingsList queryPostingsList = index.get(s); //TODO returns one list, no for loop needed down below
+	    if(queryPostingsList == null){
+		continue;
+		//return answer; //TODO fix this so that it works for some words that don't exist, but some w
+	    }
 	    double df = queryPostingsList.size();
 	    double queryScore = Math.log(N/(df+1)); //TODO why +1? and should it be 1+ log?
 		for(PostingsEntry pe : (LinkedList<PostingsEntry>) queryPostingsList.getList()){
@@ -308,10 +343,10 @@ public class HashedIndex implements Index {
 	    double rank = entry.getValue()/Math.sqrt(mag);
 
 	    //Debug info
-	    System.err.println(docIDs.get(""+docID));
+	    /*System.err.println(docIDs.get(""+docID));
 	    System.err.println("The querys score, round 2: " + entry.getValue());
 	    System.err.println("The querys mag, round 2: " + mag);
-	    System.err.println("Actual rank that is set: "+rank);
+	    System.err.println("Actual rank that is set: "+rank);*/
 	    
 
 	    PostingsEntry pe = new PostingsEntry(docID, rank);	    
@@ -325,9 +360,33 @@ public class HashedIndex implements Index {
     private void clearHashMaps(){
 	docScores.clear();
 	docMagnitude.clear();
-	docRank.clear();
-
     }
+
+    /**
+     * This function is used to get the rank from the text file of docNames and rank.
+     * We store this in a HashMap to combine it later with the tf-idf score.
+     **/
+    public void readRankScore() {
+	System.err.println("Start reading the pagerank19.out....");
+        String filename = "pagerank19.out";
+        try {
+            BufferedReader in = new BufferedReader( new FileReader( filename ));
+            String line;
+            while ((line = in.readLine()) != null){
+                int index = line.indexOf( ";" );
+                String docName = line.substring( 0, index );
+                double docRank = Double.parseDouble(line.substring(index+1, line.length())); //TODO is this slow?
+                docPageRanks.put(docName, docRank);
+            }
+        } catch ( FileNotFoundException e ) {
+	    System.err.println( "File " + filename + " not found!" );
+	} catch ( IOException e ) {
+            System.err.println( "Error reading file " + filename );
+        }
+        System.err.println( "Done reading the pagerank19.out file!" );
+	System.err.println( "Size of docPageRanks is: " + docPageRanks.size() );
+    }
+
 
     /**
      *  No need for cleanup in a HashedIndex.
