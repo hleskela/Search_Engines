@@ -17,6 +17,7 @@ public class PageRank{
     final static int MAX_NUMBER_OF_DOCS = 2000000;
     private int NUMBER_OF_DOCS = 0; //TODO remove
     private double Jc = 0; //TODO remove this too
+    final static int NUMBER_OF_WALKS = 25;
 
     /**
      * Mapping from document integer name in linkDavis.txt to actual document name (- the .f)
