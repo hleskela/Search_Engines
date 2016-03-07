@@ -100,7 +100,8 @@ public class PageRank{
 	computePagerankMC3( noOfDocs );
 	System.err.println("HERE BE NEXT 4");
 	computePagerankMC4( noOfDocs );
-	
+	System.err.println("HERE BE NEXT 5");
+	computePagerankMC5( noOfDocs );
     }
 
 
@@ -313,7 +314,6 @@ public class PageRank{
 	Random r = new Random();
 	double[] xPrime = new double[numberOfDocs];
 	Hashtable<Integer,Boolean> outlinks;
-	int startsPerNode = 100;
 	Set<Integer> keys = link.keySet();
 	for(int i=0;i<NUMBER_OF_WALKS_PER_NODE; i++){
 	    for(Integer node : keys){
@@ -351,7 +351,6 @@ public class PageRank{
 	Random r = new Random();
 	double[] xPrime = new double[numberOfDocs];
 	Hashtable<Integer,Boolean> outlinks;
-	int startsPerNode = 100;
 	Set<Integer> keys = link.keySet();
 	for(Integer node : keys){
 
@@ -361,6 +360,7 @@ public class PageRank{
 		    outlinks = link.get(node);
 		    int newNode;
 		    if(outlinks == null){ //If "node" doesn't point to any
+			xPrime[node] += 1.0; 
 			action = 1.0;
 			continue;
 		    } else {
@@ -376,6 +376,38 @@ public class PageRank{
 
 	for(int j=0; j<numberOfDocs;j++){
 	    xPrime[j] = xPrime[j]*BORED/(NUMBER_OF_WALKS_PER_NODE*numberOfDocs);
+	}
+	createPrintableInfo(xPrime);
+    }
+
+    private void computePagerankMC5(int numberOfDocs){
+	System.err.println("In pgmc5");
+	Random r = new Random();
+	double[] xPrime = new double[numberOfDocs];
+	Hashtable<Integer,Boolean> outlinks;
+	for(int i=0;i<NUMBER_OF_WALKS; i++){
+	    int node = r.nextInt(numberOfDocs);
+	    double action = r.nextDouble();
+	    while(action < 1.0-BORED){ //If we want to pick a node that "node" points to.
+		outlinks = link.get(node);
+		int newNode;
+		if(outlinks == null){ //If "node" doesn't point to any
+		    xPrime[node] += 1.0; 
+		    action = 1.0;
+		    continue;
+		} else {
+		    //Sarah saved you here, buy her a cookie.
+		    int nodeIndex = r.nextInt(outlinks.size());
+		    Integer[] nodeArray = outlinks.keySet().toArray(new Integer[outlinks.size()]);
+		    node = nodeArray[nodeIndex];
+		}
+		action = r.nextDouble();
+		xPrime[node] += 1.0; // If we end the walk, this line is executed and a new walk continues if i<NUMBER_OF_WALKS
+	    }
+	}
+
+	for(int j=0; j<numberOfDocs;j++){
+	    xPrime[j] = xPrime[j]/NUMBER_OF_WALKS;
 	}
 	createPrintableInfo(xPrime);
     }
