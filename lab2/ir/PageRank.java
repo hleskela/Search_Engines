@@ -17,7 +17,11 @@ public class PageRank{
     final static int MAX_NUMBER_OF_DOCS = 2000000;
     private int NUMBER_OF_DOCS = 0; //TODO remove
     private double Jc = 0; //TODO remove this too
-    final static int NUMBER_OF_WALKS = 25;
+
+    /**
+     * Number of walks that the Monte Carlo pagerank should go on.
+     **/
+    final static int NUMBER_OF_WALKS = 200*24000;
 
     /**
      * Mapping from document integer name in linkDavis.txt to actual document name (- the .f)
@@ -87,7 +91,8 @@ public class PageRank{
     public PageRank( String filename ) {
 	int noOfDocs = readDocs( filename );
 	readDocNames();
-	computePagerank( noOfDocs );
+	this.NUMBER_OF_DOCS = noOfDocs;
+	computePagerankMC1( noOfDocs );
     }
 
 
@@ -195,7 +200,6 @@ public class PageRank{
      *   Computes the pagerank of each document.
      */
     void computePagerank( int numberOfDocs ) {
-	this.NUMBER_OF_DOCS = numberOfDocs;
 	double jumpProbability = 1.0/(double) numberOfDocs;
 	double[] x = new double[numberOfDocs];
 	double[] xPrime = new double[numberOfDocs];
@@ -223,8 +227,42 @@ public class PageRank{
 	    length = calculateLength(deltaX);
 	}
 	createPrintableInfo(xPrime);
-	//printXPrimeDebug(xPrime, i, length);
-	
+    }
+
+    private void computePagerankMC1(int numberOfDocs){
+	System.err.println("In pgmc1");
+	Random r = new Random();
+	double[] xPrime = new double[numberOfDocs];
+	Hashtable<Integer,Boolean> outlinks;
+	for(int i=0;i<NUMBER_OF_WALKS; i++){
+	    int node = r.nextInt(numberOfDocs);
+	    double action = r.nextDouble();
+	    while(action < 1.0-BORED){ //If we want to pick a node that "node" points to.
+		outlinks = link.get(node);
+		int newNode;
+		if(outlinks == null){ //If "node" doesn't point to any
+		    newNode = r.nextInt(numberOfDocs);
+		    while(newNode == node){ // To avoid picking the same node. Unlikely to get stuck here, but it's good to have
+			newNode = r.nextInt(numberOfDocs);
+		    }
+		    node = newNode;
+		} else {
+		    //Sarah saved you here, buy her a cookie.
+		    int nodeIndex = r.nextInt(outlinks.size());
+		    Integer[] nodeArray = outlinks.keySet().toArray(new Integer[outlinks.size()]);
+		    node = nodeArray[nodeIndex];
+		}
+		action = r.nextDouble();
+	    }
+
+	    xPrime[node] += 1.0; // If we end the walk, this line is executed and a new walk continues if i<NUMBER_OF_WALKS
+	}
+	double sum=0;
+	for(int j=0; j<numberOfDocs;j++){
+	    sum += xPrime[j];
+	    xPrime[j] = xPrime[j]/NUMBER_OF_WALKS;
+	}
+	createPrintableInfo(xPrime);
     }
 
     /**
@@ -343,7 +381,6 @@ public class PageRank{
 	    new PageRank( args[0] );
 	}
     }
-
 
     /**
      * A class to keep track of the three parameters of a document.
