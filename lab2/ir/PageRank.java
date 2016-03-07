@@ -21,7 +21,7 @@ public class PageRank{
     /**
      * Number of walks that the Monte Carlo pagerank should go on.
      **/
-    final static int NUMBER_OF_WALKS = 200*24000;
+    final static int NUMBER_OF_WALKS = 200*25000;
     final static int NUMBER_OF_WALKS_PER_NODE = 2000;
     /**
      * Mapping from document integer name in linkDavis.txt to actual document name (- the .f)
@@ -92,7 +92,7 @@ public class PageRank{
 	int noOfDocs = readDocs( filename );
 	readDocNames();
 	this.NUMBER_OF_DOCS = noOfDocs;
-
+	/*
 	computePagerankMC1( noOfDocs );
 	System.err.println("HERE BE NEXT 2");
 	computePagerankMC2( noOfDocs );
@@ -101,6 +101,7 @@ public class PageRank{
 	System.err.println("HERE BE NEXT 4");
 	computePagerankMC4( noOfDocs );
 	System.err.println("HERE BE NEXT 5");
+	*/
 	computePagerankMC5( noOfDocs );
     }
 
@@ -352,15 +353,14 @@ public class PageRank{
 	double[] xPrime = new double[numberOfDocs];
 	Hashtable<Integer,Boolean> outlinks;
 	Set<Integer> keys = link.keySet();
+	int count = 0;
 	for(Integer node : keys){
-
 	    for(int i=0;i<NUMBER_OF_WALKS_PER_NODE; i++){
 		double action = r.nextDouble();
 		while(action < 1.0-BORED){ //If we want to pick a node that "node" points to.
 		    outlinks = link.get(node);
 		    int newNode;
 		    if(outlinks == null){ //If "node" doesn't point to any
-			xPrime[node] += 1.0; 
 			action = 1.0;
 			continue;
 		    } else {
@@ -371,11 +371,12 @@ public class PageRank{
 		    action = r.nextDouble();
 		}
 		xPrime[node] += 1.0; // If we end the walk, this line is executed and a new walk continues if i<NUMBER_OF_WALKS
+		count++;
 	    }
 	}
 
 	for(int j=0; j<numberOfDocs;j++){
-	    xPrime[j] = xPrime[j]*BORED/(NUMBER_OF_WALKS_PER_NODE*numberOfDocs);
+	    xPrime[j] = xPrime[j]/count;
 	}
 	createPrintableInfo(xPrime);
     }
@@ -385,6 +386,7 @@ public class PageRank{
 	Random r = new Random();
 	double[] xPrime = new double[numberOfDocs];
 	Hashtable<Integer,Boolean> outlinks;
+	int count = 0;
 	for(int i=0;i<NUMBER_OF_WALKS; i++){
 	    int node = r.nextInt(numberOfDocs);
 	    double action = r.nextDouble();
@@ -392,7 +394,6 @@ public class PageRank{
 		outlinks = link.get(node);
 		int newNode;
 		if(outlinks == null){ //If "node" doesn't point to any
-		    xPrime[node] += 1.0; 
 		    action = 1.0;
 		    continue;
 		} else {
@@ -403,11 +404,12 @@ public class PageRank{
 		}
 		action = r.nextDouble();
 		xPrime[node] += 1.0; // If we end the walk, this line is executed and a new walk continues if i<NUMBER_OF_WALKS
+		count++;
 	    }
 	}
 
 	for(int j=0; j<numberOfDocs;j++){
-	    xPrime[j] = xPrime[j]/NUMBER_OF_WALKS;
+	    xPrime[j] = xPrime[j]/count;
 	}
 	createPrintableInfo(xPrime);
     }
