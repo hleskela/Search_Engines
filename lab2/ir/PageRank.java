@@ -92,7 +92,15 @@ public class PageRank{
 	int noOfDocs = readDocs( filename );
 	readDocNames();
 	this.NUMBER_OF_DOCS = noOfDocs;
+
+	computePagerankMC1( noOfDocs );
+	System.err.println("HERE BE NEXT 2");
+	computePagerankMC2( noOfDocs );
+	System.err.println("HERE BE NEXT 3");
 	computePagerankMC3( noOfDocs );
+	System.err.println("HERE BE NEXT 4");
+	computePagerankMC4( noOfDocs );
+	
     }
 
 
@@ -288,8 +296,9 @@ public class PageRank{
 			node = nodeArray[nodeIndex];
 		    }
 		    action = r.nextDouble();
+		    xPrime[node] += 1.0; //In this case, add all nodes on the tour
 		}
-		xPrime[node] += 1.0; // If we end the walk, this line is executed and a new walk continues if i<NUMBER_OF_WALKS
+		//xPrime[node] += 1.0; // If we end the walk, this line is executed and a new walk continues if i<NUMBER_OF_WALKS
 	    }
 	}
 
@@ -306,9 +315,8 @@ public class PageRank{
 	Hashtable<Integer,Boolean> outlinks;
 	int startsPerNode = 100;
 	Set<Integer> keys = link.keySet();
-	for(Integer node : keys){
-
-	    for(int i=0;i<NUMBER_OF_WALKS_PER_NODE; i++){
+	for(int i=0;i<NUMBER_OF_WALKS_PER_NODE; i++){
+	    for(Integer node : keys){
 		double action = r.nextDouble();
 		while(action < 1.0-BORED){ //If we want to pick a node that "node" points to.
 		    outlinks = link.get(node);
@@ -319,6 +327,42 @@ public class PageRank{
 			    newNode = r.nextInt(numberOfDocs);
 			}
 			node = newNode;
+		    } else {
+			int nodeIndex = r.nextInt(outlinks.size());
+			Integer[] nodeArray = outlinks.keySet().toArray(new Integer[outlinks.size()]);
+			node = nodeArray[nodeIndex];
+		    }
+		    xPrime[node] += 1.0; // If we end the walk, this line is executed and a new walk continues if i<NUMBER_OF_WALKS
+		    action = r.nextDouble();
+		}
+
+	    }
+	}
+
+	for(int j=0; j<numberOfDocs;j++){
+	    xPrime[j] = xPrime[j]*BORED/(NUMBER_OF_WALKS_PER_NODE*numberOfDocs);
+	}
+	createPrintableInfo(xPrime);
+    }
+
+
+    private void computePagerankMC4(int numberOfDocs){
+	System.err.println("In pgmc4");
+	Random r = new Random();
+	double[] xPrime = new double[numberOfDocs];
+	Hashtable<Integer,Boolean> outlinks;
+	int startsPerNode = 100;
+	Set<Integer> keys = link.keySet();
+	for(Integer node : keys){
+
+	    for(int i=0;i<NUMBER_OF_WALKS_PER_NODE; i++){
+		double action = r.nextDouble();
+		while(action < 1.0-BORED){ //If we want to pick a node that "node" points to.
+		    outlinks = link.get(node);
+		    int newNode;
+		    if(outlinks == null){ //If "node" doesn't point to any
+			action = 1.0;
+			continue;
 		    } else {
 			int nodeIndex = r.nextInt(outlinks.size());
 			Integer[] nodeArray = outlinks.keySet().toArray(new Integer[outlinks.size()]);
