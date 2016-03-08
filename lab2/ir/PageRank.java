@@ -21,8 +21,8 @@ public class PageRank{
     /**
      * Number of walks that the Monte Carlo pagerank should go on.
      **/
-    final static int NUMBER_OF_WALKS = 200*25000;
-    final static int NUMBER_OF_WALKS_PER_NODE = 2000;
+    private int NUMBER_OF_WALKS_PER_NODE = 200;
+    private int NUMBER_OF_WALKS = NUMBER_OF_WALKS_PER_NODE*24221; //24221 is number of docs. TODO change this ugly hard coded row.
     /**
      * Mapping from document integer name in linkDavis.txt to actual document name (- the .f)
      **/
@@ -82,28 +82,57 @@ public class PageRank{
      *   Never do more than this number of iterations regardless
      *   of whether the transistion probabilities converge or not.
      */
-    final static int MAX_NUMBER_OF_ITERATIONS = 19;//1000;
-
+    final static int MAX_NUMBER_OF_ITERATIONS = 3;//1000;
     
+    /**
+     * Ugly variables used for plotting stuff
+     **/
+    
+    LinkedList<Score> pr = new LinkedList<Score>();
+    LinkedList<Score> pr1 = new LinkedList<Score>();
+    LinkedList<Score> pr2 = new LinkedList<Score>();
+    LinkedList<Score> pr3 = new LinkedList<Score>();
+    LinkedList<Score> pr4 = new LinkedList<Score>();
+    LinkedList<Score> pr5 = new LinkedList<Score>();
+    
+
+    HashMap<String, Double> mpr = new HashMap<String, Double>(); 
+    HashMap<String, Double> mpr1 = new HashMap<String, Double>(); 
+    HashMap<String, Double> mpr2 = new HashMap<String, Double>(); 
+    HashMap<String, Double> mpr3 = new HashMap<String, Double>(); 
+    HashMap<String, Double> mpr4 = new HashMap<String, Double>(); 
+    HashMap<String, Double> mpr5 = new HashMap<String, Double>(); 
+
     /* --------------------------------------------- */
 
-
+    
     public PageRank( String filename ) {
-	int noOfDocs = readDocs( filename );
-	readDocNames();
-	this.NUMBER_OF_DOCS = noOfDocs;
-	/*
-	computePagerankMC1( noOfDocs );
-	System.err.println("HERE BE NEXT 2");
-	computePagerankMC2( noOfDocs );
-	System.err.println("HERE BE NEXT 3");
-	computePagerankMC3( noOfDocs );
-	System.err.println("HERE BE NEXT 4");
-	computePagerankMC4( noOfDocs );
-	System.err.println("HERE BE NEXT 5");
-	*/
-	computePagerankMC5( noOfDocs );
+        int noOfDocs = readDocs( filename );
+        readDocNames();
+        this.NUMBER_OF_DOCS = noOfDocs;
+	computePagerank( noOfDocs );
+	for (int i=1; i<=200; i++){
+	    this.NUMBER_OF_WALKS_PER_NODE = i;
+	    computePagerankMC1( noOfDocs );
+	    printSquareSum();
+	}
     }
+
+    private void printSquareSum(){
+	double sum = 0;
+        for(int i =0;i<50;i++){
+            String s1 = pr.get(i).docName;
+            sum += Math.abs(Math.pow(mpr.get(s1)-mpr1.get(s1),2));
+        }
+        System.err.println(sum);
+        sum = 0;
+        for(int i =0;i<50;i++){
+            String s1 = pr.get(pr.size()-1-i).docName;
+            sum += Math.abs(Math.pow(mpr.get(s1)-mpr1.get(s1),2));
+        }
+        System.err.println(sum);
+    }
+
 
 
     /* --------------------------------------------- */
@@ -236,7 +265,7 @@ public class PageRank{
 	    deltaX = calculateDifferenceVector(x, xPrime);
 	    length = calculateLength(deltaX);
 	}
-	createPrintableInfo(xPrime);
+	createPrintableInfo(xPrime, pr, mpr);
     }
 
     private void computePagerankMC1(int numberOfDocs){
@@ -271,7 +300,7 @@ public class PageRank{
 	for(int j=0; j<numberOfDocs;j++){
 	    xPrime[j] = xPrime[j]/NUMBER_OF_WALKS;
 	}
-	createPrintableInfo(xPrime);
+	createPrintableInfo(xPrime, pr1, mpr1);
     }
 
     private void computePagerankMC2(int numberOfDocs){
@@ -307,7 +336,7 @@ public class PageRank{
 	for(int j=0; j<numberOfDocs;j++){
 	    xPrime[j] = xPrime[j]/(NUMBER_OF_WALKS_PER_NODE*numberOfDocs); //TODO check math
 	}
-	createPrintableInfo(xPrime);
+	createPrintableInfo(xPrime, pr2, mpr2);
     }
 
     private void computePagerankMC3(int numberOfDocs){
@@ -343,7 +372,7 @@ public class PageRank{
 	for(int j=0; j<numberOfDocs;j++){
 	    xPrime[j] = xPrime[j]*BORED/(NUMBER_OF_WALKS_PER_NODE*numberOfDocs);
 	}
-	createPrintableInfo(xPrime);
+	createPrintableInfo(xPrime, pr3, mpr3);
     }
 
 
@@ -378,7 +407,7 @@ public class PageRank{
 	for(int j=0; j<numberOfDocs;j++){
 	    xPrime[j] = xPrime[j]/count;
 	}
-	createPrintableInfo(xPrime);
+	createPrintableInfo(xPrime, pr4, mpr4);
     }
 
     private void computePagerankMC5(int numberOfDocs){
@@ -411,7 +440,7 @@ public class PageRank{
 	for(int j=0; j<numberOfDocs;j++){
 	    xPrime[j] = xPrime[j]/count;
 	}
-	createPrintableInfo(xPrime);
+	createPrintableInfo(xPrime, pr5, mpr5);
     }
 
 
@@ -431,6 +460,25 @@ public class PageRank{
 	    //System.err.println(tmp.docID + " : " + tmp.docName + " : " + tmp.score);
 	    System.err.println(tmp.docName + ";" + tmp.score);
 	}
+    }
+
+    /**
+     *
+     **/
+    private void createPrintableInfo(double[] xPrime, LinkedList<Score> list , HashMap<String, Double> map){
+  	Score s;
+	for(int h = 0; h<NUMBER_OF_DOCS; h++){
+	    String docname = docName[h];
+	    s = new Score(xPrime[h], docname, actualDocNames.get(docname));
+	    list.add(s);
+	    map.put(actualDocNames.get(docname), xPrime[h]);
+	}
+	Collections.sort(list);
+	/*	for(int i=0; i<NUMBER_OF_DOCS;i++){
+	    Score tmp = list.get(i);
+	    //System.err.println(tmp.docID + " : " + tmp.docName + " : " + tmp.score);
+	    System.err.println(tmp.docName + ";" + tmp.score);
+	    }*/
     }
 
     /**
