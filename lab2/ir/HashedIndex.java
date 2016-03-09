@@ -104,17 +104,10 @@ public class HashedIndex implements Index {
 		    answer = rankedSearch(terms);
 		} else if(rankingType == Index.COMBINATION){
 		    answer = rankedSearch(terms);
-		    double x = 1.0;
-		    double y = 100000.0; //makes the most important docs in the order of 10<x<100
-		    for(PostingsEntry pe : (LinkedList<PostingsEntry>)answer.getList()){
-			String docName = docIDs.get(""+pe.docID);
-			docName = docName.substring(10,docName.length()); //TODO gets rid of davisWiki/
-			double pagerank = docPageRanks.get(docName);
-			pe.score = pe.score*x + pagerank*y;
-		    }
-		    answer.sort();
+		    answer = tfPagerankCombined(answer,1,10000);
 		} else if(rankingType == Index.PAGERANK){
-		    answer = getPageRankPostingsList();
+		    answer = rankedSearch(terms);
+		    answer = tfPagerankCombined(answer,0,1);
 		}
 		return answer; //TODO implement stuff
 	    }
@@ -139,6 +132,17 @@ public class HashedIndex implements Index {
 	    
 	}
 	return null;
+    }
+
+    public PostingsList tfPagerankCombined(PostingsList answer, double x, double y){
+	for(PostingsEntry pe : (LinkedList<PostingsEntry>)answer.getList()){
+	    String docName = docIDs.get(""+pe.docID);
+	    docName = docName.substring(10,docName.length()); //TODO gets rid of davisWiki/
+	    double pagerank = docPageRanks.get(docName);
+	    pe.score = pe.score*x + pagerank*y;
+	}
+	answer.sort();
+	return answer;
     }
 
     /**
@@ -298,7 +302,8 @@ public class HashedIndex implements Index {
 	    double df = pl.size();
 	    double idf = Math.log(n/df); //TODO using natural log, should it be log10?
 	    for(PostingsEntry pe : (LinkedList<PostingsEntry>) pl.getList()){
-		pe.score = pe.offset.size()*idf;
+		//System.err.println("docLengths.get"+pe.docID+" : "+docLengths.get(""+pe.docID));
+		pe.score = pe.offset.size()*idf/docLengths.get(""+pe.docID); // TODO didn't normalize by length before!!
 	    }
 	}
     }    
@@ -336,7 +341,6 @@ public class HashedIndex implements Index {
 	}
 	
 	// Final step, calculates the rank with scores and magnitude
-	// TODO decide if you want docRank or not.
 	for(Map.Entry<String,Double> entry : docScores.entrySet()){
 	    int docID = Integer.parseInt(entry.getKey());
 	    double mag = docMagnitude.get(entry.getKey());
