@@ -303,7 +303,7 @@ public class HashedIndex implements Index {
 	    double idf = Math.log(n/df); //TODO using natural log, should it be log10?
 	    for(PostingsEntry pe : (LinkedList<PostingsEntry>) pl.getList()){
 		//System.err.println("docLengths.get"+pe.docID+" : "+docLengths.get(""+pe.docID));
-		pe.score = pe.offset.size()*idf/docLengths.get(""+pe.docID); // TODO didn't normalize by length before!!
+		pe.score = pe.offset.size()*idf; //docLengths.get(""+pe.docID); We normalize with magnitude, thats why we don't lenght normalize
 	    }
 	}
     }    
